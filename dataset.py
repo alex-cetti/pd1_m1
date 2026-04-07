@@ -2,10 +2,10 @@ import medmnist
 import random 
 import numpy as np
 
-from medmnist import ChestMNIST, RetinaMNIST
+from medmnist import ChestMNIST, RetinaMNIST, BloodMNIST
 
 def load_dataset():
-    test_dataset = RetinaMNIST(split="test", download=True, size=64)
+    test_dataset = BloodMNIST(split="test", download=True, size=64)
     
     
     print(test_dataset[0])
