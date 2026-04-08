@@ -40,6 +40,8 @@ def gamma_correction(img, gamma):
     return gamma_corrected
 
 def unsharp_mask(img, blur_img, fr):
+    img = np.array(img, dtype=np.float32)
+    blur_img = np.array(blur_img, dtype=np.float32)
     mask = img - blur_img
 
     sharp =img + (fr * mask)
@@ -47,6 +49,9 @@ def unsharp_mask(img, blur_img, fr):
     return  np.clip(sharp, 0, 255).astype(np.uint8)
 
 def highboost_mask(img, blur_img,  ft):
+    img = np.array(img, dtype=float)
+    blur_img = np.array(blur_img, dtype=float)
+
     hb = (img * ft) - blur_img
 
     return np.clip(hb, 0, 255).astype(np.uint8)
