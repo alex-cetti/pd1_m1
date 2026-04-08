@@ -3,7 +3,30 @@ import numpy as np
 from SSIM_PIL import compare_ssim
 from PIL import Image
 import sporco.metric as sm
+import matplotlib.pyplot as plt
 
+
+
+def data_table(img_a, img_b):
+
+    data = [
+        ["Metricas", "Resultado"],
+        ["MSE", f"{round(mse(img_a, img_b), 3)}"],
+        ["PNSR", f"{round(psnr(img_a, img_b), 3)}"],
+        ["SSIM", f"{round(ssim(img_a, img_b), 3)}"],
+        ["GMSE", f"{round(gmsd(img_a, img_b), 3)}"],
+    ]
+
+    return  data
+
+def draw_hist(img, ax, title):
+    x_axis, point_count = hist(img)
+    
+    ax.set_title(title) 
+    ax.set_xlabel("Intensidade")
+    ax.set_ylabel("Frequência")
+
+    return  
 
 def hist(img):
     intervalo_min_max = [0, 256]
@@ -36,7 +59,7 @@ def psnr(original, compressed):
 
 
 def ssim(img_a, img_b):
-    value =  compare_ssim(img_a, img_b)
+    value =  compare_ssim( Image.fromarray(img_a),  Image.fromarray(img_b))
 
     return value
 

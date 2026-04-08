@@ -21,11 +21,13 @@ def create_dataset(size=3, rand=False):
             idx = random.randint(0, len(ds) - 1)
             img, lbl = ds[idx]
             a_img =  np.array(img)
-            output.append(a_img) 
+            mp = (idx, a_img)
+            output.append(mp) 
         else:
             img, lbl = ds[i]
             a_img =  np.array(img)
-            output.append(a_img) 
+            mp = (i, a_img)
+            output.append(mp) 
         
     return output
 

@@ -18,29 +18,53 @@ def add_noise(img, mode='gaussian'):
     #mode='gaussian' #clip=True
     #
     
-    noised = random_noise(img, mode=mode )
+    noised = random_noise(img, mode=mode, var=0.005, clip=True)
     
-    return noised 
+    return (255*noised).astype(np.uint8)
 
 def hist_norm(img):
-
-    point_start, point_count = metricas.hist(img)
+    fimg = np.array(img, dtype=np.uint8)
+    point_start, point_count = metricas.hist(fimg)
     pdf = point_count / np.sum(point_count)
     cdf = np.cumsum(pdf)
     f_eq = np.round(cdf * 255).astype(np.uint8)
-
-    img_eq = f_eq[img]
+   # print(f_eq)
+   # print(img)
+    img_eq = f_eq[fimg]
     return img_eq
 
-def gamma_correction(img, gamma=1.7):
+def gamma_correction(img, gamma):
     
     gamma_corrected = np.array(255 * (img / 255) ** gamma, dtype='uint8')
     
     return gamma_corrected
 
+def unsharp_mask(img, blur_img, fr):
+    mask = img - blur_img
+
+    sharp =img + (fr * mask)
+
+    return  np.clip(sharp, 0, 255).astype(np.uint8)
+
+def highboost_mask(img, blur_img,  ft):
+    hb = (img * ft) - blur_img
+
+    return np.clip(hb, 0, 255).astype(np.uint8)
 
 
-def conv2d_sharpening(img, kernel, padding=True):
+def sobel_conv(img):
+   s1 = get_kernel("sobel_1")
+   s2 = get_kernel("sobel_2")
+
+   img_s1 = convolution_sharpening(img, s1)
+   img_s2 = convolution_sharpening(img, s2)
+
+   img_sobel = np.abs(img_s1, img_s2)
+
+   return img_sobel
+
+
+def convolution_sharpening(img, kernel, padding=True):
     # Get dimensions of the kernel
     k_height, k_width = kernel.shape  # Atribui valor à variável k_height, k_width
 
@@ -108,7 +132,19 @@ def medianFilter(img, kernel, padding=True):
     return np.array(output, dtype=np.uint8)
 
 
+def bubble_sort(arr):
 
+    # Outer loop to iterate through the list n times
+    for n in range(len(arr) - 1, 0, -1):
+
+        # Inner loop to compare adjacent elements
+        for i in range(n):
+            if arr[i] > arr[i + 1]:
+
+                # Swap elements if they are in the wrong order
+                swapped = True
+                arr[i], arr[i + 1] = arr[i + 1], arr[i]
+    return arr
 
 def add_padding(img, padding_height, padding_width):
     n, m = img.shape
@@ -120,62 +156,59 @@ def add_padding(img, padding_height, padding_width):
 
     return padded_img
 
+def convolution(img, kernel, padding=True):
+    # Get dimensions of the kernel
+    k_height, k_width = kernel.shape  # Atribui valor à variável k_height, k_width
 
-def convolution(img, kernel_name, kernel_size=3, padding=True):
+    # Get dimensions of the image
+    img_height, img_width = img.shape  # Atribui valor à variável img_height, img_width
 
-    kernel = get_kernel(kernel_name, kernel_size)
+    # Calculate padding required
+    pad_height = k_height // 2  # Atribui valor à variável pad_height
+    pad_width = k_width // 2  # Atribui valor à variável pad_width
 
-    k_height, k_width = kernel.shape
-
-
-    img_height, img_width = img.shape
-
-    #Tamanho do padding, de acordo com o kernel
-    pad_height = k_height // 2
-    pad_width = k_width // 2
-
-
+    # Create a padded version of the image to handle edges
     if padding == True:
-        padded_img = add_padding(img, pad_height, pad_width)  # Executa o Padding
-    else:
-        padded_img = img
+        padded_img = add_padding(img, pad_height, pad_width)  # Atribui valor à variável padded_img
 
+    #print(padded_img)
 
-    output = np.zeros((img_height, img_width), dtype=float)  # Cria matriz de 0 para o output
+    # Initialize an output image with zeros
+    output = np.zeros((img_height, img_width), dtype=float)  # Atribui valor à variável output
 
     # Perform convolution
+    for i_img in range(img_height):  # Loop usando i
+        for j_img in range(img_width):  # Loop usando j
+            for i_kernel in range(k_height):
+                for j_kernel in range(k_width):
+                    output[i_img, j_img] = output[i_img, j_img] + (padded_img[i_img+i_kernel, j_img+j_kernel] * kernel[i_kernel, j_kernel])  # Atribui valor à variável output[i, j]
+            output[i_img, j_img] = int(output[i_img, j_img])
 
-
-
-  
-
-    for i in range(img_height):
-       for j in range(img_width):
-
-           ## Regiao de interesse na imagem
-           reg = padded_img[i:i+k_height, j:j+k_width]
-           if kernel_name == "Mediana":
-             valor = np.median(reg.flatten())
-           else:
-             valor = np.sum(reg * kernel)
-
-           output[i, j] =  valor
-
-
-
-    
     return np.array(output, dtype=np.uint8)
 
-
-
-def get_kernel(name, size=3, sigma=2):
+def get_kernel(name, size=None, sigma=None):
   
   if name == "sobel_2":
-    return np.array(([-1,0,1],[-2,0,2],[-1,0,1]))
-  elif name =="laplac":
-     return np.array(([0,1,0],[1,-4,1],[0,1,0]))
+    return np.array((
+        [-1,0,1],
+        [-2,0,2],
+        [-1,0,1]
+                ))
+
   elif name == "sobel_1":
-    return np.array(([-1,-2,-1],[0,0,0],[1,2,1]))
+    return np.array((
+        [-1,-2,-1],
+        [0,0,0],
+        [1,2,1]
+                    ))
+
+  elif name =="laplaciano":
+     return np.array((
+        [0,1,0],
+        [1,-4,1],
+        [0,1,0]
+               ))
+  
   elif name == "sharpen":
     return np.array([
         [0, -1, 0],
